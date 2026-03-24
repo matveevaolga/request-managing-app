@@ -1,0 +1,25 @@
+# Environment variables
+.env
+
+# Binaries
+bin/
+*.exe
+
+# Test coverage
+*.out
+*.test
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+
+# Go build artifacts
+*.exe~
+*.dll
+*.so
+*.dylib
