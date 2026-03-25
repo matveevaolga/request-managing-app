@@ -53,7 +53,7 @@ func (r *projectTypeRepository) GetByName(ctx context.Context, name string) (*do
 	return &pt, nil
 }
 
-func (r *projectTypeRepository) GetAll(ctx context.Context) ([]domain.ProjectType, error) {
+func (r *projectTypeRepository) GetAllProjects(ctx context.Context) ([]domain.ProjectType, error) {
 	query := `SELECT id, name, created_at FROM project_types ORDER BY id`
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
