@@ -16,7 +16,7 @@ func NewProjectTypeService(repo repository.ProjectTypeRepository) *ProjectTypeSe
 	return &ProjectTypeService{repo: repo}
 }
 
-func (s *ProjectTypeService) GetAll(ctx context.Context) ([]domain.ProjectType, error) {
+func (s *ProjectTypeService) GetAllProjects(ctx context.Context) ([]domain.ProjectType, error) {
 	types, err := s.repo.GetAllProjects(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get project types: %w", err)

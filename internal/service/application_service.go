@@ -7,6 +7,7 @@ import (
 
 	"github.com/matveevaolga/request-managing-app/internal/domain"
 	"github.com/matveevaolga/request-managing-app/internal/domain/repository"
+	"github.com/matveevaolga/request-managing-app/internal/transport/handler/dto"
 )
 
 type ApplicationService struct {
@@ -15,21 +16,9 @@ type ApplicationService struct {
 	userRepo repository.UserRepository
 }
 
-type CreateApplicationRequest struct {
-	FullName              string
-	Email                 string
-	Phone                 *string
-	OrganisationName      string
-	OrganisationURL       *string
-	ProjectName           string
-	TypeID                int64
-	ExpectedResults       string
-	IsPayed               bool
-	AdditionalInformation *string
-}
-
 func NewApplicationService(appRepo repository.ApplicationRepository,
-	typeRepo repository.ProjectTypeRepository, userRepo repository.UserRepository) *ApplicationService {
+	typeRepo repository.ProjectTypeRepository, userRepo repository.UserRepository,
+) *ApplicationService {
 	return &ApplicationService{
 		appRepo:  appRepo,
 		typeRepo: typeRepo,
@@ -37,7 +26,7 @@ func NewApplicationService(appRepo repository.ApplicationRepository,
 	}
 }
 
-func (s *ApplicationService) Create(ctx context.Context, req *CreateApplicationRequest) (int64, error) {
+func (s *ApplicationService) Create(ctx context.Context, req *dto.CreateApplicationRequest) (int64, error) {
 	_, err := s.typeRepo.GetByID(ctx, req.TypeID)
 	if err != nil {
 		return 0, fmt.Errorf("invalid project type: %w", err)
@@ -117,4 +106,8 @@ func (s *ApplicationService) Reject(ctx context.Context, id int64, reviewerID in
 	}
 
 	return s.appRepo.UpdateStatus(ctx, id, app.Status, app.ReviewerID, app.RejectedReason)
+}
+
+func (s *ApplicationService) GetProjectTypeByID(ctx context.Context, id int64) (*domain.ProjectType, error) {
+	return s.typeRepo.GetByID(ctx, id)
 }
