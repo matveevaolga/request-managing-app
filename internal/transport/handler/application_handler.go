@@ -43,6 +43,8 @@ func (h *ApplicationHandler) Create(w http.ResponseWriter, r *http.Request) {
 		switch err {
 		case domain.ErrProjectTypeNotFound:
 			RespondWithError(w, http.StatusBadRequest, "Invalid project type", err)
+		case domain.ErrApplicationAlreadyExists:
+			RespondWithError(w, http.StatusBadRequest, "Application with this project name has already been created by a user with this email", err)
 		default:
 			RespondWithError(w, http.StatusInternalServerError, "Failed to create application", err)
 		}

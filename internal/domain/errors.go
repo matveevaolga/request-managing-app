@@ -20,9 +20,10 @@ var (
 
 // Application errors
 var (
-	ErrApplicationNotFound    = errors.New("application not found")
-	ErrApplicationNotPending  = errors.New("application is not in pending status")
-	ErrInvalidApplicationData = errors.New("invalid application data")
+	ErrApplicationNotFound      = errors.New("application not found")
+	ErrApplicationNotPending    = errors.New("application is not in pending status")
+	ErrInvalidApplicationData   = errors.New("invalid application data")
+	ErrApplicationAlreadyExists = errors.New("application for this email with this project name already exists")
 )
 
 // Validation errors

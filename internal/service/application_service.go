@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -31,7 +32,6 @@ func (s *ApplicationService) Create(ctx context.Context, req *dto.CreateApplicat
 	if err != nil {
 		return 0, fmt.Errorf("invalid project type: %w", err)
 	}
-
 	app := &domain.Application{
 		FullName:              req.FullName,
 		Email:                 req.Email,
@@ -47,12 +47,13 @@ func (s *ApplicationService) Create(ctx context.Context, req *dto.CreateApplicat
 		CreatedAt:             time.Now(),
 		UpdatedAt:             time.Now(),
 	}
-
 	err = s.appRepo.Create(ctx, app)
 	if err != nil {
+		if errors.Is(err, domain.ErrApplicationAlreadyExists) {
+			return 0, domain.ErrApplicationAlreadyExists
+		}
 		return 0, fmt.Errorf("failed to create application: %w", err)
 	}
-
 	return app.ID, nil
 }
 

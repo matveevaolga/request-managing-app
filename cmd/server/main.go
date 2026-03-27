@@ -65,12 +65,8 @@ func initDB(cfg *config.Config) *pgxpool.Pool {
 	return db
 }
 
-func registerRoutes(
-	authHandler *handler.AuthHandler,
-	projectTypeHandler *handler.ProjectTypeHandler,
-	appHandler *handler.ApplicationHandler,
-	authService *service.AuthService,
-) *http.ServeMux {
+func registerRoutes(authHandler *handler.AuthHandler, projectTypeHandler *handler.ProjectTypeHandler,
+	appHandler *handler.ApplicationHandler, authService *service.AuthService) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /login", authHandler.Login)
@@ -89,15 +85,15 @@ func registerRoutes(
 		).ServeHTTP(w, r)
 	})
 
-	mux.HandleFunc("POST /project/application/external/{applicationId}/accept", func(w http.ResponseWriter, r *http.Request) {
-		middleware.RequireAdmin(
-			middleware.Auth(authService)(http.HandlerFunc(appHandler.Accept)),
-		).ServeHTTP(w, r)
-	})
-
 	mux.HandleFunc("POST /project/application/external/{applicationId}/reject", func(w http.ResponseWriter, r *http.Request) {
 		middleware.RequireAdmin(
 			middleware.Auth(authService)(http.HandlerFunc(appHandler.Reject)),
+		).ServeHTTP(w, r)
+	})
+
+	mux.HandleFunc("POST /project/application/external/{applicationId}/accept", func(w http.ResponseWriter, r *http.Request) {
+		middleware.RequireAdmin(
+			middleware.Auth(authService)(http.HandlerFunc(appHandler.Accept)),
 		).ServeHTTP(w, r)
 	})
 
@@ -108,8 +104,8 @@ func initServer(cfg *config.Config, handler http.Handler) *http.Server {
 	return &http.Server{
 		Addr:         ":" + cfg.ServerPort,
 		Handler:      middleware.Logging(handler),
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  20 * time.Second,
+		WriteTimeout: 20 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 }

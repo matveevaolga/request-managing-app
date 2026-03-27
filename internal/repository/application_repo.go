@@ -32,7 +32,7 @@ func (r *applicationRepository) Create(ctx context.Context, app *domain.Applicat
 		Values(app.FullName, app.Email, app.Phone, app.OrganisationName, app.OrganisationURL,
 			app.ProjectName, app.TypeID, app.ExpectedResults, app.IsPayed, app.AdditionalInformation,
 			app.Status, app.CreatedAt, app.UpdatedAt).
-		Suffix("RETURNING id")
+		Suffix("ON CONFLICT (project_name, email) DO NOTHING RETURNING id")
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -41,6 +41,9 @@ func (r *applicationRepository) Create(ctx context.Context, app *domain.Applicat
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&app.ID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.ErrApplicationAlreadyExists
+		}
 		return fmt.Errorf("failed to create application: %w", err)
 	}
 	return nil
