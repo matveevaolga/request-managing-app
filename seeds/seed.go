@@ -11,6 +11,7 @@ import (
 	"github.com/matveevaolga/request-managing-app/internal/repository"
 )
 
+//go:embed data/*
 var seedFS embed.FS
 
 func main() {

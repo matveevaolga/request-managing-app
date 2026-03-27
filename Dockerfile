@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine AS builder
+FROM golang:1.25.0-alpine AS builder
 
 WORKDIR /app
 
@@ -8,6 +8,7 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/bin/server ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/bin/seed ./seeds
 
 FROM alpine:latest
 
@@ -16,7 +17,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 COPY --from=builder /app/bin/server .
-
+COPY --from=builder /app/bin/seed .
 COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 8000
