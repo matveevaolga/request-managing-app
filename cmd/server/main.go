@@ -67,35 +67,17 @@ func initDB(cfg *config.Config) *pgxpool.Pool {
 
 func registerRoutes(authHandler *handler.AuthHandler, projectTypeHandler *handler.ProjectTypeHandler,
 	appHandler *handler.ApplicationHandler, authService *service.AuthService) *http.ServeMux {
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /login", authHandler.Login)
 	mux.HandleFunc("GET /project/type", projectTypeHandler.GetAllProjects)
 	mux.HandleFunc("POST /project/application/external", appHandler.Create)
 
-	mux.HandleFunc("GET /project/application/external/list", func(w http.ResponseWriter, r *http.Request) {
-		middleware.RequireAdmin(
-			http.HandlerFunc(appHandler.GetAllFiltered),
-		).ServeHTTP(w, r)
-	})
-
-	mux.HandleFunc("GET /project/application/external/{applicationId}", func(w http.ResponseWriter, r *http.Request) {
-		middleware.RequireAdmin(
-			http.HandlerFunc(appHandler.GetByID),
-		).ServeHTTP(w, r)
-	})
-
-	mux.HandleFunc("POST /project/application/external/{applicationId}/reject", func(w http.ResponseWriter, r *http.Request) {
-		middleware.RequireAdmin(
-			middleware.Auth(authService)(http.HandlerFunc(appHandler.Reject)),
-		).ServeHTTP(w, r)
-	})
-
-	mux.HandleFunc("POST /project/application/external/{applicationId}/accept", func(w http.ResponseWriter, r *http.Request) {
-		middleware.RequireAdmin(
-			middleware.Auth(authService)(http.HandlerFunc(appHandler.Accept)),
-		).ServeHTTP(w, r)
-	})
+	mux.HandleFunc("GET /project/application/external/list", middleware.CheckAdmin(appHandler.GetAllFiltered, authService))
+	mux.HandleFunc("GET /project/application/external/{applicationId}", middleware.CheckAdmin(appHandler.GetByID, authService))
+	mux.HandleFunc("POST /project/application/external/{applicationId}/accept", middleware.CheckAdmin(appHandler.Accept, authService))
+	mux.HandleFunc("POST /project/application/external/{applicationId}/reject", middleware.CheckAdmin(appHandler.Reject, authService))
 
 	return mux
 }
