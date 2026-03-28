@@ -1,7 +1,8 @@
 include .env
 export
 
-.PHONY: run build test test-coverage docker-up docker-down docker-logs migrate-create migrate-up migrate-down seed
+.PHONY: run build test test-coverage docker-up docker-down docker-logs migrate-create migrate-up migrate-down seed act-build act-lint act-test act-clean act-build-local
+
 
 run:
 	go run ./cmd/server/main.go
@@ -38,3 +39,12 @@ migrate-down:
 
 seed:
 	go run ./seeds/seed.go
+
+act-build-local:
+	act -j build -W .github/workflows/docker-local.yml --secret-file .env.act
+
+act-lint:
+	act -j lint --secret-file .env.act
+
+act-test:
+	act -j test --secret-file .env.act

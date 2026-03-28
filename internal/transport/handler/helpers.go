@@ -16,7 +16,9 @@ func RespondWithError(w http.ResponseWriter, status int, message string, err err
 	)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(dto.ErrorResponse{Error: message})
+	if encodeErr := json.NewEncoder(w).Encode(dto.ErrorResponse{Error: message}); encodeErr != nil {
+		slog.Error("Failed to encode error response", "error", encodeErr)
+	}
 }
 
 func RespondWithJSON(w http.ResponseWriter, status int, data interface{}) {
