@@ -1,4 +1,3 @@
-```markdown
 # Request Managing App
 
 [![Go Version](https://img.shields.io/badge/go-1.25-blue.svg)](https://golang.org/)
