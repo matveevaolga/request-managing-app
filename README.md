@@ -36,41 +36,29 @@
    cp .env.example .env
    ```
 
-2. Запустить PostgreSQL:
+2. Запустить все сервисы (PostgreSQL, миграции, seed, приложение):
    ```bash
    make docker-up
    ```
 
-3. Выполнить миграции:
-   ```bash
-   make migrate-up
-   ```
-
-4. Запустить сервер:
-   ```bash
-   make run
-   ```
-
 Сервер будет доступен по адресу: `http://localhost:8000`
 
-### Запуск через Docker Compose
+## Команды Makefile
 
-Проект полностью контейнеризирован. При запуске `make docker-up` автоматически:
-- Запускается PostgreSQL с проверкой готовности
-- Выполняются миграции базы данных
-- Заполняются тестовые данные
-- Запускается приложение на порту 8000
-
-```bash
-# Запустить все сервисы
-make docker-up
-
-# Посмотреть логи
-make docker-logs
-
-# Остановить
-make docker-down
-```
+- **make run** - запустить сервер локально (требует запущенной БД)
+- **make build** - собрать бинарный файл
+- **make test** - запустить тесты с race detector
+- **make test-coverage** - запустить тесты с отчетом о покрытии
+- **make docker-up** - запустить все контейнеры в правильном порядке:
+  1. PostgreSQL (ждет готовности)
+  2. Миграции базы данных
+  3. Заполнение тестовыми данными (seed)
+  4. Приложение на порту 8000
+- **make docker-down** - остановить и удалить контейнеры (данные сохраняются)
+- **make docker-logs** - просмотреть логи Docker
+- **make migrate-up** - применить миграции
+- **make migrate-down** - откатить миграции
+- **make migrate-create** - создать новую миграцию
 
 ## Тестовые пользователи
 
@@ -169,42 +157,15 @@ curl -X POST http://localhost:8000/project/application/external/1/reject \
   -d '{"reason": "Не соответствует критериям"}'
 ```
 
-## Команды Makefile
-
-- **make run** - запустить сервер
-- **make build** - собрать бинарный файл
-- **make test** - запустить тесты с race detector
-- **make test-coverage** - запустить тесты с отчетом о покрытии
-- **make docker-up** - запустить все контейнеры в правильном порядке:
-  1. PostgreSQL (ждет готовности)
-  2. Миграции базы данных
-  3. Заполнение тестовыми данными (seed)
-  4. Приложение на порту 8000
-- **make docker-down** - остановить контейнеры
-- **make docker-logs** - просмотреть логи Docker
-- **make migrate-up** - применить миграции
-- **make migrate-down** - откатить миграции
-- **make migrate-create** - создать новую миграцию
-
-## Запуск тестов
-
-```bash
-# Запустить все тесты
-make test
-
-# Запустить с покрытием
-make test-coverage
-```
-
 ## CI/CD
 
 Проект настроен на автоматические проверки при каждом push:
 
-- **Test** - запуск тестов с PostgreSQL
-- **Lint** - статический анализ кода через golangci-lint
-- **Docker** - сборка образа (при push в main)
+- **Test** - запуск тестов с PostgreSQL. Выполняется при push в ветки: `main`, `develop`, `feature/*`, `ci/cd-integration`, а также при pull request в `main` и `develop`
+- **Lint** - статический анализ кода через golangci-lint. Выполняется при push в ветки: `main`, `develop`, `feature/*`, `ci/cd-integration`, а также при pull request в `main` и `develop`
+- **Docker** - сборка и публикация Docker образа. Выполняется при push в ветки: `main`, `develop`, `feature/*`, `ci/cd-integration`, а также при создании тегов `v*`. Образ публикуется в Docker Hub под именем `{username}/request-managing-app` с тегами: версия (semver), название ветки и короткий хеш коммита.
 
-### Локальное тестирование GitHub Actions
+### Локальное тестирование workflows
 
 Для локального запуска GitHub Actions workflows используйте [act](https://github.com/nektos/act).
 
