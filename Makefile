@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: run build test docker-up docker-down migrate-create migrate-up migrate-down seed
+.PHONY: run build test test-coverage docker-up docker-down docker-logs migrate-create migrate-up migrate-down seed
 
 run:
 	go run ./cmd/server/main.go
@@ -11,6 +11,11 @@ build:
 
 test:
 	go test -v -race ./...
+
+test-coverage:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
 
 docker-up:
 	docker-compose up -d

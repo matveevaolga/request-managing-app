@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -40,11 +41,11 @@ func (h *ApplicationHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.service.Create(r.Context(), &req)
 	if err != nil {
-		switch err {
-		case domain.ErrProjectTypeNotFound:
+		switch {
+		case errors.Is(err, domain.ErrProjectTypeNotFound):
 			RespondWithError(w, http.StatusBadRequest, "Invalid project type", err)
-		case domain.ErrApplicationAlreadyExists:
-			RespondWithError(w, http.StatusBadRequest, "Application with this project name has already been created by a user with this email", err)
+		case errors.Is(err, domain.ErrApplicationAlreadyExists):
+			RespondWithError(w, http.StatusBadRequest, "Application with this project name and email already exists", err)
 		default:
 			RespondWithError(w, http.StatusInternalServerError, "Failed to create application", err)
 		}
