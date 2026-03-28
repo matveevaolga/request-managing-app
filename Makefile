@@ -1,8 +1,7 @@
 include .env
 export
 
-.PHONY: run build test test-coverage docker-up docker-down docker-logs migrate-create migrate-up migrate-down seed act-build act-lint act-test act-clean act-build-local
-
+.PHONY: run build test test-coverage docker-up docker-down docker-logs migrate-create migrate-up migrate-down
 
 run:
 	go run ./cmd/server/main.go
@@ -18,12 +17,19 @@ test-coverage:
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
+# Start all containers (PostgreSQL, migrations, seed, app) in order:
+# 1. postgres - starts and passes healthcheck
+# 2. migrate - runs migrations, exits
+# 3. seed - populates database with test data, exits
+# 4. app - starts after seed completes successfully
 docker-up:
 	docker-compose up -d
 
+# Stop all containers
 docker-down:
 	docker-compose down
 
+# View logs from all containers
 docker-logs:
 	docker-compose logs -f
 
@@ -36,15 +42,3 @@ migrate-up:
 
 migrate-down:
 	migrate -path migrations -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSLMODE}" down
-
-seed:
-	go run ./seeds/seed.go
-
-act-build-local:
-	act -j build -W .github/workflows/docker-local.yml --secret-file .env.act
-
-act-lint:
-	act -j lint --secret-file .env.act
-
-act-test:
-	act -j test --secret-file .env.act
