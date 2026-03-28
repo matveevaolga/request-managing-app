@@ -1,4 +1,4 @@
-name: Lint
+name: Test
 
 on:
   push:
@@ -7,9 +7,24 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  lint:
-    name: Run Linter
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: request_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout code
@@ -21,9 +36,24 @@ jobs:
           go-version: '1.25'
           cache: true
 
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v4
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run migrations
+        env:
+          CONN_STRING: postgresql://postgres:postgres@localhost:5432/request_db?sslmode=disable
+        run: |
+          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+          migrate -path migrations -database "$CONN_STRING" up
+
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Display coverage
+        run: go tool cover -func=coverage.out
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
         with:
-          version: v1.64
-          args: --timeout=5m
-          only-new-issues: true
+          file: ./coverage.out
+          fail_ci_if_error: false
