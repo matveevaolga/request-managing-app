@@ -1,25 +1,42 @@
 # Environment variables
 .env
+.env.local
+.env.*.local
 
 # Binaries
-bin/
+/bin/
+/bin/server
 *.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 
 # Test coverage
-*.out
+coverage.out
+coverage.html
 *.test
+
+# Go build artifacts
+vendor/
+go.work
+go.work.sum
 
 # IDE files
 .idea/
 .vscode/
 *.swp
 *.swo
+*~
 
 # OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Go build artifacts
-*.exe~
-*.dll
-*.so
-*.dylib
+# Logs
+*.log
