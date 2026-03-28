@@ -2,7 +2,7 @@
 .env
 .env.local
 .env.*.local
-.env.act
+.env.secrets
 
 # Binaries
 /bin/

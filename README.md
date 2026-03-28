@@ -12,7 +12,7 @@
 - Go 1.25
 - PostgreSQL 15
 - JWT для аутентификации
-- Docker + Docker Compose
+- Docker, Docker Compose
 - GitHub Actions (CI/CD)
 - golangci-lint
 
@@ -29,32 +29,36 @@
 
 ## Быстрый старт
 
-1. Скопировать конфиг:
+### Локальная разработка
+
+1. Скопировать и заполнить конфиг:
    ```bash
    cp .env.example .env
    ```
 
-2. Запустить PostgreSQL:
+2. Запустить все сервисы (PostgreSQL, миграции, seed, приложение):
    ```bash
    make docker-up
    ```
 
-3. Выполнить миграции:
-   ```bash
-   make migrate-up
-   ```
-
-4. Заполнить тестовыми данными:
-   ```bash
-   make seed
-   ```
-
-5. Запустить сервер:
-   ```bash
-   make run
-   ```
-
 Сервер будет доступен по адресу: `http://localhost:8000`
+
+## Команды Makefile
+
+- **make run** - запустить сервер локально (требует запущенной БД)
+- **make build** - собрать бинарный файл
+- **make test** - запустить тесты с race detector
+- **make test-coverage** - запустить тесты с отчетом о покрытии
+- **make docker-up** - запустить все контейнеры в правильном порядке:
+  1. PostgreSQL (ждет готовности)
+  2. Миграции базы данных
+  3. Заполнение тестовыми данными (seed)
+  4. Приложение на порту 8000
+- **make docker-down** - остановить и удалить контейнеры (данные сохраняются)
+- **make docker-logs** - просмотреть логи Docker
+- **make migrate-up** - применить миграции
+- **make migrate-down** - откатить миграции
+- **make migrate-create** - создать новую миграцию
 
 ## Тестовые пользователи
 
@@ -153,47 +157,52 @@ curl -X POST http://localhost:8000/project/application/external/1/reject \
   -d '{"reason": "Не соответствует критериям"}'
 ```
 
-## Команды Makefile
-
-- **make run** - запустить сервер
-- **make build** - собрать бинарный файл
-- **make test** - запустить тесты с race detector
-- **make test-coverage** - запустить тесты с отчетом о покрытии
-- **make docker-up** - запустить PostgreSQL в Docker
-- **make docker-down** - остановить контейнеры
-- **make docker-logs** - просмотреть логи Docker
-- **make migrate-up** - применить миграции
-- **make migrate-down** - откатить миграции
-- **make migrate-create** - создать новую миграцию
-- **make seed** - заполнить базу тестовыми данными
-
-## Запуск через Docker Compose
-
-```bash
-# Запустить все сервисы
-docker-compose up -d
-
-# Посмотреть логи
-docker-compose logs -f
-
-# Остановить
-docker-compose down
-```
-
-## Запуск тестов
-
-```bash
-# Запустить все тесты
-make test
-
-# Запустить с покрытием
-make test-coverage
-```
-
 ## CI/CD
 
 Проект настроен на автоматические проверки при каждом push:
 
-- **Test** - запуск тестов с PostgreSQL
-- **Lint** - статический анализ кода через golangci-lint
-- **Docker** - сборка образа (при push в main)
+- **Test** - запуск тестов с PostgreSQL. Выполняется при push в ветки: `main`, `develop`, `feature/*`, `ci/cd-integration`, а также при pull request в `main` и `develop`
+- **Lint** - статический анализ кода через golangci-lint. Выполняется при push в ветки: `main`, `develop`, `feature/*`, `ci/cd-integration`, а также при pull request в `main` и `develop`
+- **Docker** - сборка и публикация Docker образа. Выполняется при push в ветки: `main`, `develop`, `feature/*`, `ci/cd-integration`, а также при создании тегов `v*`. Образ публикуется в Docker Hub под именем `{username}/request-managing-app` с тегами: версия (semver), название ветки и короткий хеш коммита.
+
+### Локальное тестирование workflows
+
+Для локального запуска GitHub Actions workflows используйте [act](https://github.com/nektos/act).
+
+1. Скопировать файл с секретами:
+   ```bash
+   cp .env.secrets.example .env.secrets
+   ```
+
+2. Заполнить секреты в `.env.secrets`:
+   ```
+   DOCKER_USERNAME=your-dockerhub-username
+   DOCKER_PASSWORD=your-dockerhub-token
+   ```
+
+3. Запустить конкретный workflow:
+   ```bash
+   act -j test --secret-file .env.secrets
+   act -j lint --secret-file .env.secrets
+   act -j build --secret-file .env.secrets
+   ```
+
+**Примечание:** `.env.secrets` добавлен в `.gitignore` и не должен попадать в репозиторий.
+
+## Структура проекта
+
+- **cmd/server/** - точка входа (main.go)
+- **internal/config/** - конфигурация из переменных окружения
+- **internal/domain/** - бизнес-сущности и интерфейсы репозиториев
+- **internal/repository/** - реализация работы с PostgreSQL
+- **internal/service/** - бизнес-логика (сценарии использования)
+- **internal/transport/handler/** - HTTP handlers и DTO
+- **internal/transport/middleware/** - middleware (аутентификация, логирование)
+- **internal/logger/** - настройка структурированного логирования (slog)
+- **migrations/** - SQL миграции для создания схемы базы данных
+- **seeds/** - автоматическое заполнение базы тестовыми данными
+- **.github/workflows/** - CI/CD пайплайны (GitHub Actions)
+- **docker-compose.yaml** - конфигурация для запуска всех сервисов
+- **Dockerfile** - инструкция для сборки Docker образа
+- **Makefile** - автоматизация команд (запуск, тесты, миграции)
+- **README.md** - документация проекта
