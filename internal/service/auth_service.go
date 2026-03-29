@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/matveevaolga/request-managing-app/internal/domain"
 	"github.com/matveevaolga/request-managing-app/internal/domain/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
@@ -30,23 +31,7 @@ func NewAuthService(userRepo repository.UserRepository, secret string, expHours 
 	}
 }
 
-func (s *AuthService) generateToken(userID int64, role string) (string, error) {
-	exp := time.Now().Add(time.Duration(s.expHours) * time.Hour)
-
-	claims := &Claims{
-		UserID: userID,
-		Role:   role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(exp),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.secret))
-}
-
-func (s *AuthService) Login(ctx context.Context, username, pass string) (string, error) {
+func (s *AuthService) Login(ctx context.Context, username, password string) (string, error) {
 	user, err := s.userRepo.GetByUsername(ctx, username)
 	if err != nil {
 		if err == domain.ErrUserNotFound {
@@ -55,7 +40,7 @@ func (s *AuthService) Login(ctx context.Context, username, pass string) (string,
 		return "", fmt.Errorf("failed to get user: %w", err)
 	}
 
-	if user.Password != pass {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return "", domain.ErrInvalidCredentials
 	}
 
@@ -84,4 +69,20 @@ func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	return nil, fmt.Errorf("invalid token")
+}
+
+func (s *AuthService) generateToken(userID int64, role string) (string, error) {
+	exp := time.Now().Add(time.Duration(s.expHours) * time.Hour)
+
+	claims := &Claims{
+		UserID: userID,
+		Role:   role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(exp),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(s.secret))
 }

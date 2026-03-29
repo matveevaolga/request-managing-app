@@ -8,6 +8,7 @@ import (
 
 	"github.com/matveevaolga/request-managing-app/internal/domain"
 	domainrepo "github.com/matveevaolga/request-managing-app/internal/domain/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func seedUsers(ctx context.Context, repo domainrepo.UserRepository) error {
@@ -16,9 +17,34 @@ func seedUsers(ctx context.Context, repo domainrepo.UserRepository) error {
 		return err
 	}
 	for _, u := range users {
-		if err := createUser(ctx, repo, u); err != nil {
+		exists, err := repo.GetByUsername(ctx, u.Username)
+		if err != nil && err != domain.ErrUserNotFound {
 			return err
 		}
+		if exists != nil {
+			slog.Info("user already exists", "username", u.Username)
+			continue
+		}
+
+		role := domain.RoleUser
+		if u.Role == "ADMIN" {
+			role = domain.RoleAdmin
+		}
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		user := &domain.User{
+			Username:  u.Username,
+			Password:  string(hashedPassword),
+			Role:      role,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		if err := repo.Create(ctx, user); err != nil {
+			return err
+		}
+		slog.Info("user created", "username", user.Username, "role", user.Role)
 	}
 	return nil
 }
@@ -41,16 +67,21 @@ func createUser(ctx context.Context, repo domainrepo.UserRepository, u userSeed)
 		return err
 	}
 	if exists != nil {
-		slog.Info("User already exists", "username", u.Username)
+		slog.Info("user already exists", "username", u.Username)
 		return nil
 	}
 	role := domain.RoleUser
 	if u.Role == "ADMIN" {
 		role = domain.RoleAdmin
 	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
 	user := &domain.User{
 		Username:  u.Username,
-		Password:  u.Password,
+		Password:  string(hashedPassword),
 		Role:      role,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -58,6 +89,6 @@ func createUser(ctx context.Context, repo domainrepo.UserRepository, u userSeed)
 	if err := repo.Create(ctx, user); err != nil {
 		return err
 	}
-	slog.Info("User created", "username", user.Username, "role", user.Role)
+	slog.Info("user created", "username", user.Username, "role", user.Role)
 	return nil
 }
