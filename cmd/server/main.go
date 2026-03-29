@@ -72,7 +72,7 @@ func registerRoutes(authHandler *handler.AuthHandler, projectTypeHandler *handle
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status": "ok"}`))
+		_, _ = w.Write([]byte(`{"status": "ok"}`))
 	})
 
 	mux.HandleFunc("POST /login", authHandler.Login)
