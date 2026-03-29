@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/matveevaolga/request-managing-app/internal/domain"
@@ -28,6 +29,12 @@ func NewApplicationService(appRepo repository.ApplicationRepository,
 }
 
 func (s *ApplicationService) Create(ctx context.Context, req *dto.CreateApplicationRequest) (int64, error) {
+	if req.Phone != nil && *req.Phone != "" {
+		pattern := `.*\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}.*`
+		if matched, _ := regexp.MatchString(pattern, *req.Phone); !matched {
+			return 0, fmt.Errorf("invalid phone format. Expected format: +7 (XXX) XXX-XX-XX")
+		}
+	}
 	_, err := s.typeRepo.GetByID(ctx, req.TypeID)
 	if err != nil {
 		return 0, fmt.Errorf("invalid project type: %w", err)
