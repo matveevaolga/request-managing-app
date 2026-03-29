@@ -13,6 +13,7 @@ import (
 	"github.com/matveevaolga/request-managing-app/internal/service"
 	"github.com/matveevaolga/request-managing-app/internal/transport/handler/dto"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestAuthHandler_Login(t *testing.T) {
@@ -24,13 +25,16 @@ func TestAuthHandler_Login(t *testing.T) {
 	handler := NewAuthHandler(authService)
 
 	t.Run("successful login", func(t *testing.T) {
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("admin1"), bcrypt.DefaultCost)
 		user := &domain.User{
 			ID:       1,
 			Username: "admin1",
-			Password: "admin1",
+			Password: string(hashedPassword),
 			Role:     domain.RoleAdmin,
 		}
-		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "admin1").Return(user, nil)
+		mockUserRepo.EXPECT().
+			GetByUsername(gomock.Any(), "admin1").
+			Return(user, nil)
 
 		reqBody := dto.LoginRequest{
 			Login:    "admin1",
@@ -53,7 +57,9 @@ func TestAuthHandler_Login(t *testing.T) {
 	})
 
 	t.Run("invalid credentials - user not found", func(t *testing.T) {
-		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "nonexistent").Return(nil, domain.ErrUserNotFound)
+		mockUserRepo.EXPECT().
+			GetByUsername(gomock.Any(), "nonexistent").
+			Return(nil, domain.ErrUserNotFound)
 
 		reqBody := dto.LoginRequest{
 			Login:    "nonexistent",
@@ -76,13 +82,16 @@ func TestAuthHandler_Login(t *testing.T) {
 	})
 
 	t.Run("wrong password", func(t *testing.T) {
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("admin1"), bcrypt.DefaultCost)
 		user := &domain.User{
 			ID:       1,
 			Username: "admin1",
-			Password: "admin1",
+			Password: string(hashedPassword),
 			Role:     domain.RoleAdmin,
 		}
-		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "admin1").Return(user, nil)
+		mockUserRepo.EXPECT().
+			GetByUsername(gomock.Any(), "admin1").
+			Return(user, nil)
 
 		reqBody := dto.LoginRequest{
 			Login:    "admin1",

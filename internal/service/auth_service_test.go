@@ -8,6 +8,7 @@ import (
 	"github.com/matveevaolga/request-managing-app/internal/domain"
 	"github.com/matveevaolga/request-managing-app/internal/domain/repository/mocks"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestAuthService_Login(t *testing.T) {
@@ -17,11 +18,16 @@ func TestAuthService_Login(t *testing.T) {
 	mockUserRepo := mocks.NewMockUserRepository(ctrl)
 	service := NewAuthService(mockUserRepo, "test-secret", 24)
 
+	admin1Hash, _ := bcrypt.GenerateFromPassword([]byte("admin1"), bcrypt.DefaultCost)
+	admin2Hash, _ := bcrypt.GenerateFromPassword([]byte("admin2"), bcrypt.DefaultCost)
+	user1Hash, _ := bcrypt.GenerateFromPassword([]byte("user1"), bcrypt.DefaultCost)
+	user2Hash, _ := bcrypt.GenerateFromPassword([]byte("user2"), bcrypt.DefaultCost)
+
 	t.Run("successful login as admin1", func(t *testing.T) {
 		user := &domain.User{
 			ID:       1,
 			Username: "admin1",
-			Password: "admin1",
+			Password: string(admin1Hash),
 			Role:     domain.RoleAdmin,
 		}
 		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "admin1").Return(user, nil)
@@ -36,7 +42,7 @@ func TestAuthService_Login(t *testing.T) {
 		user := &domain.User{
 			ID:       2,
 			Username: "admin2",
-			Password: "admin2",
+			Password: string(admin2Hash),
 			Role:     domain.RoleAdmin,
 		}
 		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "admin2").Return(user, nil)
@@ -51,7 +57,7 @@ func TestAuthService_Login(t *testing.T) {
 		user := &domain.User{
 			ID:       3,
 			Username: "user1",
-			Password: "user1",
+			Password: string(user1Hash),
 			Role:     domain.RoleUser,
 		}
 		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "user1").Return(user, nil)
@@ -66,7 +72,7 @@ func TestAuthService_Login(t *testing.T) {
 		user := &domain.User{
 			ID:       4,
 			Username: "user2",
-			Password: "user2",
+			Password: string(user2Hash),
 			Role:     domain.RoleUser,
 		}
 		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "user2").Return(user, nil)
@@ -91,7 +97,7 @@ func TestAuthService_Login(t *testing.T) {
 		user := &domain.User{
 			ID:       1,
 			Username: "admin1",
-			Password: "admin1",
+			Password: string(admin1Hash),
 			Role:     domain.RoleAdmin,
 		}
 		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "admin1").Return(user, nil)
@@ -107,7 +113,7 @@ func TestAuthService_Login(t *testing.T) {
 		user := &domain.User{
 			ID:       3,
 			Username: "user1",
-			Password: "user1",
+			Password: string(user1Hash),
 			Role:     domain.RoleUser,
 		}
 		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "user1").Return(user, nil)
@@ -127,11 +133,15 @@ func TestAuthService_ValidateToken(t *testing.T) {
 	mockUserRepo := mocks.NewMockUserRepository(ctrl)
 	service := NewAuthService(mockUserRepo, "test-secret", 24)
 
+	admin1Hash, _ := bcrypt.GenerateFromPassword([]byte("admin1"), bcrypt.DefaultCost)
+	admin2Hash, _ := bcrypt.GenerateFromPassword([]byte("admin2"), bcrypt.DefaultCost)
+	user1Hash, _ := bcrypt.GenerateFromPassword([]byte("user1"), bcrypt.DefaultCost)
+
 	t.Run("validate valid token for admin1", func(t *testing.T) {
 		user := &domain.User{
 			ID:       1,
 			Username: "admin1",
-			Password: "admin1",
+			Password: string(admin1Hash),
 			Role:     domain.RoleAdmin,
 		}
 		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "admin1").Return(user, nil)
@@ -149,7 +159,7 @@ func TestAuthService_ValidateToken(t *testing.T) {
 		user := &domain.User{
 			ID:       3,
 			Username: "user1",
-			Password: "user1",
+			Password: string(user1Hash),
 			Role:     domain.RoleUser,
 		}
 		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "user1").Return(user, nil)
@@ -167,7 +177,7 @@ func TestAuthService_ValidateToken(t *testing.T) {
 		user := &domain.User{
 			ID:       2,
 			Username: "admin2",
-			Password: "admin2",
+			Password: string(admin2Hash),
 			Role:     domain.RoleAdmin,
 		}
 		mockUserRepo.EXPECT().GetByUsername(gomock.Any(), "admin2").Return(user, nil)

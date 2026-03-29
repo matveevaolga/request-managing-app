@@ -201,8 +201,9 @@ func (h *ApplicationHandler) getIDFromPath(path, suffix string) (int64, error) {
 
 func (h *ApplicationHandler) createFilterParams(r *http.Request) repository.ApplicationFilterParameters {
 	params := repository.ApplicationFilterParameters{
-		Limit:  20,
-		Offset: 0,
+		Limit:             20,
+		Offset:            0,
+		SortByDateUpdated: "DESC",
 	}
 
 	if activeStr := r.URL.Query().Get("active"); activeStr != "" {
@@ -221,7 +222,9 @@ func (h *ApplicationHandler) createFilterParams(r *http.Request) repository.Appl
 	}
 
 	if sortBy := r.URL.Query().Get("sortByDateUpdated"); sortBy != "" {
-		params.SortByDateUpdated = sortBy
+		if sortBy == "ASC" || sortBy == "DESC" {
+			params.SortByDateUpdated = sortBy
+		}
 	}
 
 	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
