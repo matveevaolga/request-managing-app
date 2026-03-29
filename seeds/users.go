@@ -60,35 +60,3 @@ func loadUsers() ([]userSeed, error) {
 	}
 	return users, nil
 }
-
-func createUser(ctx context.Context, repo domainrepo.UserRepository, u userSeed) error {
-	exists, err := repo.GetByUsername(ctx, u.Username)
-	if err != nil && err != domain.ErrUserNotFound {
-		return err
-	}
-	if exists != nil {
-		slog.Info("user already exists", "username", u.Username)
-		return nil
-	}
-	role := domain.RoleUser
-	if u.Role == "ADMIN" {
-		role = domain.RoleAdmin
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-	user := &domain.User{
-		Username:  u.Username,
-		Password:  string(hashedPassword),
-		Role:      role,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	if err := repo.Create(ctx, user); err != nil {
-		return err
-	}
-	slog.Info("user created", "username", user.Username, "role", user.Role)
-	return nil
-}
