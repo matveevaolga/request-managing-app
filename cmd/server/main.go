@@ -70,6 +70,11 @@ func registerRoutes(authHandler *handler.AuthHandler, projectTypeHandler *handle
 
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status": "ok"}`))
+	})
+
 	mux.HandleFunc("POST /login", authHandler.Login)
 	mux.HandleFunc("GET /project/type", projectTypeHandler.GetAllProjects)
 	mux.HandleFunc("POST /project/application/external", appHandler.Create)
