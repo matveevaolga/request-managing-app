@@ -46,6 +46,8 @@ func (h *ApplicationHandler) Create(w http.ResponseWriter, r *http.Request) {
 			RespondWithError(w, http.StatusBadRequest, "Invalid project type", err)
 		case errors.Is(err, domain.ErrApplicationAlreadyExists):
 			RespondWithError(w, http.StatusBadRequest, "Application with this project name and email already exists", err)
+		case strings.Contains(err.Error(), "invalid phone format"):
+			RespondWithError(w, http.StatusBadRequest, err.Error(), err)
 		default:
 			RespondWithError(w, http.StatusInternalServerError, "Failed to create application", err)
 		}
@@ -199,8 +201,9 @@ func (h *ApplicationHandler) getIDFromPath(path, suffix string) (int64, error) {
 
 func (h *ApplicationHandler) createFilterParams(r *http.Request) repository.ApplicationFilterParameters {
 	params := repository.ApplicationFilterParameters{
-		Limit:  20,
-		Offset: 0,
+		Limit:             20,
+		Offset:            0,
+		SortByDateUpdated: "DESC",
 	}
 
 	if activeStr := r.URL.Query().Get("active"); activeStr != "" {
@@ -219,7 +222,9 @@ func (h *ApplicationHandler) createFilterParams(r *http.Request) repository.Appl
 	}
 
 	if sortBy := r.URL.Query().Get("sortByDateUpdated"); sortBy != "" {
-		params.SortByDateUpdated = sortBy
+		if sortBy == "ASC" || sortBy == "DESC" {
+			params.SortByDateUpdated = sortBy
+		}
 	}
 
 	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
