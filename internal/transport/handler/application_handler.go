@@ -46,6 +46,8 @@ func (h *ApplicationHandler) Create(w http.ResponseWriter, r *http.Request) {
 			RespondWithError(w, http.StatusBadRequest, "Invalid project type", err)
 		case errors.Is(err, domain.ErrApplicationAlreadyExists):
 			RespondWithError(w, http.StatusBadRequest, "Application with this project name and email already exists", err)
+		case strings.Contains(err.Error(), "invalid phone format"):
+			RespondWithError(w, http.StatusBadRequest, err.Error(), err)
 		default:
 			RespondWithError(w, http.StatusInternalServerError, "Failed to create application", err)
 		}

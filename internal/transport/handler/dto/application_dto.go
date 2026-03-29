@@ -5,7 +5,7 @@ import "time"
 type CreateApplicationRequest struct {
 	FullName              string  `json:"fullName" validate:"required,min=2,max=150"`
 	Email                 string  `json:"email" validate:"required,email,max=150"`
-	Phone                 *string `json:"phone,omitempty" validate:"omitempty,regexp=^\\+7\\s\\(\\d{3}\\)\\s\\d{3}-\\d{2}-\\d{2}$"`
+	Phone                 *string `json:"phone,omitempty"`
 	OrganisationName      string  `json:"organisationName" validate:"required,max=150"`
 	OrganisationURL       *string `json:"organisationUrl,omitempty" validate:"omitempty,url"`
 	ProjectName           string  `json:"projectName" validate:"required,max=150"`
